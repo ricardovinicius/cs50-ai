@@ -95,3 +95,30 @@ Doesn't always find the optimal solution.
 
 Search algorithm that always expands the shallowest node in the frontier
 Uses the queue (FIFO) as DS for frontier.
+
+## Uninformed Search
+
+Search strategy that uses no problem-specific knowledge
+
+## Informed search
+
+Search strategy that uses problem-specific knowledge to find solutions more efficiently
+
+### Greedy Best-First Search
+
+> Search algorithm that expands the node that is closest to the goal, as estimated by a heurist function $h(n)$
+
+### A\* search
+
+> Search algorithm that expands node with lowest value of $g(n) + h(n)$
+>
+> $g(n)$ = cost to reach node
+>
+> $h(n)$ = estimated cost to goal
+>
+> Optimal if:
+>
+> - $h(n)$ is admissible (never overestimates the true cost), and
+> - $h(n)$ is consistent (for every node $n$ and successor $n'$ with step cost $c$, $h(n) <= h(n') + c$)
+
+EOF - 1:11:50

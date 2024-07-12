@@ -1,5 +1,5 @@
 import sys
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 class Node():
   def __init__(self, state, parent, action):
@@ -27,6 +27,12 @@ class StackFrontier():
       node = self.frontier[-1]
       self.frontier = self.frontier[:-1]
       return node
+    
+  def sort_reverse(self, func):
+    self.frontier.sort(key=func, reverse=True)
+    
+    return self
+
     
 class QueueFrontier(StackFrontier):
   def remove(self):
@@ -77,8 +83,7 @@ class Maze():
       self.walls.append(row)
 
     self.solution = None
-
-
+    
   def print(self):
     solution = self.solution[1] if self.solution is not None else None
     print()
@@ -113,6 +118,21 @@ class Maze():
         result.append((action, (r, c)))
     return result
   
+  def h(self, node):
+    row, col = node.state
+    row_goal, col_goal = self.goal
+    
+    return abs((row_goal - row)) + abs((col_goal - col))
+  
+  def g(self, node):
+    row, col = node.state
+    row_start, col_start = self.start
+    
+    return abs((row_start - row)) + abs((col_start - col))
+  
+  def h_g(self, node):
+    return self.h(node) + self.g(node)
+  
   def solve(self):
     """Find a solution to maze, if one exists."""
     
@@ -135,7 +155,7 @@ class Maze():
         raise Exception("no solution")
       
       # Choose a node from the frontier
-      node = frontier.remove()
+      node = frontier.sort_reverse(self.h_g).remove()
       self.num_explored += 1
       
       # If node is the goal, then we have a solution
@@ -161,53 +181,68 @@ class Maze():
           frontier.add(child)
       
   def output_image(self, filename, show_solution=True, show_explored=False):
-    cell_size = 50
-    cell_border = 2
+      cell_size = 50
+      cell_border = 2
 
-    # Create a blank canvas
-    img = Image.new(
-        "RGBA",
-        (self.width * cell_size, self.height * cell_size),
-        "black"
-    )
-    draw = ImageDraw.Draw(img)
+      # Cria uma tela em branco
+      img = Image.new(
+          "RGBA",
+          (self.width * cell_size, self.height * cell_size),
+          "black"
+      )
+      draw = ImageDraw.Draw(img)
 
-    solution = self.solution[1] if self.solution is not None else None
-    for i, row in enumerate(self.walls):
-        for j, col in enumerate(row):
+      # Define a fonte para desenhar o texto
+      try:
+          font = ImageFont.truetype("arial.ttf", 16)  # Tente usar a fonte Arial
+      except IOError:
+          font = ImageFont.load_default()  # Caso a fonte Arial não esteja disponível
 
-            # Walls
-            if col:
-                fill = (40, 40, 40)
+      solution = self.solution[1] if self.solution is not None else None
+      for i, row in enumerate(self.walls):
+          for j, col in enumerate(row):
 
-            # Start
-            elif (i, j) == self.start:
-                fill = (255, 0, 0)
+              # Pinta as paredes
+              if col:
+                  fill = (40, 40, 40)
+              # Pinta o ponto de início
+              elif (i, j) == self.start:
+                  fill = (255, 0, 0)
+              # Pinta o ponto final
+              elif (i, j) == self.goal:
+                  fill = (0, 171, 28)
+              # Pinta a solução
+              elif solution is not None and show_solution and (i, j) in solution:
+                  fill = (220, 235, 113)
+              # Pinta as células exploradas
+              elif solution is not None and show_explored and (i, j) in self.explored:
+                  fill = (212, 97, 85)
+              # Célula vazia
+              else:
+                  fill = (237, 240, 252)
 
-            # Goal
-            elif (i, j) == self.goal:
-                fill = (0, 171, 28)
+              # Desenha a célula
+              draw.rectangle(
+                  [(j * cell_size + cell_border, i * cell_size + cell_border),
+                  ((j + 1) * cell_size - cell_border, (i + 1) * cell_size - cell_border)],
+                  fill=fill
+              )
 
-            # Solution
-            elif solution is not None and show_solution and (i, j) in solution:
-                fill = (220, 235, 113)
+              # Desenha o valor da heurística no meio da célula
+              h_value = self.h_g(Node(state=(i, j), parent=None, action=None))
+              text = str(h_value)
 
-            # Explored
-            elif solution is not None and show_explored and (i, j) in self.explored:
-                fill = (212, 97, 85)
+              # Usa textbbox para obter a largura e altura do texto
+              text_bbox = draw.textbbox((0, 0), text, font=font)
+              text_width = text_bbox[2] - text_bbox[0]
+              text_height = text_bbox[3] - text_bbox[1]
 
-            # Empty cell
-            else:
-                fill = (237, 240, 252)
+              text_x = j * cell_size + (cell_size - text_width) / 2
+              text_y = i * cell_size + (cell_size - text_height) / 2
+              draw.text((text_x, text_y), text, fill="black", font=font)
 
-            # Draw cell
-            draw.rectangle(
-                ([(j * cell_size + cell_border, i * cell_size + cell_border),
-                  ((j + 1) * cell_size - cell_border, (i + 1) * cell_size - cell_border)]),
-                fill=fill
-            )
+      img.save(filename)
 
-    img.save(filename)
     
 if len(sys.argv) != 2:
   sys.exit("Usage: python maze.py maze.txt")
