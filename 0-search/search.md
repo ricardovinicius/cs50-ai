@@ -121,4 +121,27 @@ Search strategy that uses problem-specific knowledge to find solutions more effi
 > - $h(n)$ is admissible (never overestimates the true cost), and
 > - $h(n)$ is consistent (for every node $n$ and successor $n'$ with step cost $c$, $h(n) <= h(n') + c$)
 
-EOF - 1:11:50
+## Adversarial Search
+
+### Minimax
+
+The algorithm consists in a recursive choices between the possible states, considering that when is the turn of the opponent they will choose the best state for them (the max opponent score), and when is your state you will choose the best state for you (the min opponent score), and the best action will be the one that minimizes the score (ou maximizes, depending on the goal).
+
+- $MAX(X)$ aims to maximize score
+- $MIN(X)$ aims to minimize score
+
+#### Game
+
+- $S_0$: initial state
+- $Player(s)$: returns which player to move in state $s$
+- $Actions(s)$: returns legal moves in state $s$
+- $Result(s, a)$: returns state after action $a$ taken in state $s$
+- $Terminal(s)$: checks if state s is a terminal state
+- $Utility(s)$: final numerical value for terminal state $s$
+
+### Steps:
+
+- Given a state $s$:
+  - $MAX$ picks action $a$ in $Actions(s)$ that produces highest value of $MinValue(Result(s,a))$
+
+_EOF - 1:32:23_
